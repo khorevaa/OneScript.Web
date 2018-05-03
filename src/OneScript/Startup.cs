@@ -25,28 +25,18 @@ namespace OneScript.WebHost
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env, ILoggerFactory logs)
+        public Startup(IConfiguration conf)
         {
-            if(env.IsDevelopment())
-                logs.AddConsole();
-
-            var confBuilder = new ConfigurationBuilder();
-            var location = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            confBuilder.AddJsonFile(Path.Combine(location, "appsettings.json"), optional:true);
-            confBuilder.SetBasePath(Directory.GetCurrentDirectory());
-            confBuilder.AddJsonFile("appsettings.json", optional: true);
-
-            Configuration = confBuilder.Build();
-            logs.AddConsole(Configuration);
+            Configuration = conf;
         }
         
-        private IConfigurationRoot Configuration { get; set; }
+        private IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IConfigurationRoot>(Configuration);
+            services.AddSingleton<IConfiguration>(Configuration);
 
             services.Configure<RazorViewEngineOptions>(options =>
             {
@@ -57,14 +47,13 @@ namespace OneScript.WebHost
             services.AddSession();
 
             services.AddAuthentication(
-                options => options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
+                options => options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme);
 
             services.AddOptions();
             
             services.AddMvc()
                 .ConfigureApplicationPartManager(pm=>pm.FeatureProviders.Add(new ScriptedViewComponentFeatureProvider()));
 
-            //TODO - изменить на список поддерживаемых хранилищ фоновых заданий
             services.AddHangfire(c => c.UseMemoryStorage());
             
             services.AddOneScript();
@@ -79,9 +68,11 @@ namespace OneScript.WebHost
             {
                 app.UseDeveloperExceptionPage();
             }
-            
-            //todo переопределить 5xx ошибку в продуктиве
-            
+            else
+            {
+                app.UseStatusCodePages();
+            }
+
             var oscriptApp = services.GetService<ApplicationInstance>();
             oscriptApp.OnStartup(app);
             

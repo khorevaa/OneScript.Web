@@ -19,7 +19,7 @@ namespace OneScript.WebHost.Application
         public static ChallengeActionResult Constructor(IValue externalAuth, IValue redirectUri)
         {
             var challengeResult = new ChallengeResult(
-                externalAuth.AsString(), new AuthenticationProperties() { RedirectUri = redirectUri.AsString() }    
+                //externalAuth.AsString(), new AuthenticationProperties() { RedirectUri = redirectUri.AsString() }    
             );
             
             return new ChallengeActionResult(challengeResult);

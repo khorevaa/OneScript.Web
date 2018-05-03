@@ -126,6 +126,7 @@ namespace OneScriptWeb.Tests
                 _values.Clear();
             }
 
+
             public bool IsAvailable { get; }
             public string Id { get; }
             public IEnumerable<string> Keys => _values.Keys;

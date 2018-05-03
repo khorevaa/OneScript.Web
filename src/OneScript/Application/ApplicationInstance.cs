@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using Hangfire.Mongo;
-using Hangfire.Redis;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -173,10 +171,10 @@ namespace OneScript.WebHost.Application
                     
                     Redis = ConnectionMultiplexer.Connect(_connectString);
 
-                    var RedisOption = new RedisStorageOptions();
+                    /*var RedisOption = new RedisStorageOptions();
                     RedisOption.Prefix = _defaultPrefix;
                     
-                    GlobalConfiguration.Configuration.UseRedisStorage(Redis, RedisOption);
+                    GlobalConfiguration.Configuration.UseRedisStorage(Redis, RedisOption);*/
                     break;
                 
                 case "MongoDB":
@@ -268,42 +266,7 @@ namespace OneScript.WebHost.Application
             if (authParams.HasProperty("ClientSecret")) { _appCIS = authParams.GetPropValue(authParams.FindProperty("ClientSecret")).AsString(); }
             else { throw RuntimeException.InvalidArgumentValue("Для сервиса auth0 не определено свойство ClientSecret в структуре параметров"); };
             
-            _startupBuilder.UseCookieAuthentication(new CookieAuthenticationOptions
-            {
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true
-            });
-            
-            var options = new OpenIdConnectOptions("Auth0")
-            {
-                // Set the authority to your Auth0 domain
-                Authority = $"https://{_appDomain}",
-
-                // Configure the Auth0 Client ID and Client Secret
-                ClientId = _appCID,
-                ClientSecret = _appCIS,
-
-                // Do not automatically authenticate and challenge
-                AutomaticAuthenticate = false,
-                AutomaticChallenge = false,
-
-                // Set response type to code
-                ResponseType = "code",
-
-                // Set the callback path, so Auth0 will call back to http://localhost:5000/signin-auth0 
-                // Also ensure that you have added the URL as an Allowed Callback URL in your Auth0 dashboard 
-                CallbackPath = new PathString("/signin-auth0"), //todo переопределять явное указание колбэка из скрипта
-
-                // Configure the Claims Issuer to be Auth0
-                ClaimsIssuer = "Auth0" 
-                
-               
-            };
-            
-            
-            options.Scope.Clear();
-            options.Scope.Add("openid");
-            _startupBuilder.UseOpenIdConnectAuthentication(options);
+           //
 
         }
 
@@ -353,8 +316,8 @@ namespace OneScript.WebHost.Application
             
             var bc = compiler.Compile(src);
             var app = new ApplicationInstance(new LoadedModule(bc));
-            
-            
+            var machine = MachineInstance.Current;
+            webApp.Environment.LoadMemory(machine);
             webApp.Engine.InitializeSDO(app);
 
             return app;
